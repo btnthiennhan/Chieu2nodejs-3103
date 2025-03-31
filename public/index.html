@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Menu Display</title>
+    <!-- Import Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        ul#menu-list {
+            list-style-type: none;
+            display: flex; /* Sắp xếp các mục cấp 1 theo chiều ngang */
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            overflow: visible; /* Đảm bảo dropdown không bị cắt */
+        }
+
+        li.level-1 {
+            position: relative; /* Để dropdown hiển thị đúng vị trí */
+        }
+
+        .level-1 a {
+            display: flex;
+            align-items: center;
+            padding: 15px 25px;
+            color: white;
+            text-decoration: none;
+            background: linear-gradient(90deg, #007bff 0%, #00c4ff 100%);
+            transition: all 0.3s ease;
+            font-weight: 600;
+            white-space: nowrap; /* Ngăn text xuống dòng */
+        }
+
+        .level-1 a::before {
+            content: '▼';
+            margin-right: 8px;
+            font-size: 10px;
+            transition: transform 0.3s ease;
+        }
+
+        .level-1:hover a::before {
+            transform: rotate(180deg);
+        }
+
+        .level-1 a:hover {
+            background: linear-gradient(90deg, #0056b3 0%, #0097e6 100%);
+        }
+
+        /* Dropdown menu cấp 2 */
+        .level-1 ul {
+            position: absolute;
+            top: 100%; /* Hiển thị ngay bên dưới mục cha */
+            left: 0;
+            width: 200px; /* Độ rộng cố định cho dropdown */
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transform: translateY(10px);
+            opacity: 0;
+            visibility: hidden;
+            transition: transform 0.3s ease, opacity 0.3s ease, visibility 0.3s;
+            z-index: 10; /* Đảm bảo dropdown nằm trên các phần tử khác */
+        }
+
+        .level-2 {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+        }
+
+        .level-2 a {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #2c3e50;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+
+        .level-2 a::before {
+            content: '→';
+            margin-right: 8px;
+            color: #007bff;
+            font-size: 12px;
+        }
+
+        .level-2 a:hover {
+            background: #e9ecef;
+            color: #007bff;
+        }
+
+        /* Hiệu ứng khi hover vào mục cha */
+        .level-1:hover ul {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Hiệu ứng loading */
+        .loading {
+            font-size: 1.2rem;
+            color: #007bff;
+            margin-top: 20px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            ul#menu-list {
+                flex-direction: column; /* Chuyển sang dọc trên màn hình nhỏ */
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .level-1 ul {
+                position: static; /* Dropdown hiển thị bình thường trên mobile */
+                width: 100%;
+                transform: none;
+                opacity: 1;
+                visibility: visible;
+                display: none; /* Ẩn mặc định trên mobile */
+            }
+
+            .level-1:hover ul {
+                display: block; /* Hiện dropdown khi hover trên mobile */
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Menu Structure - Bạch Thiện Nhân</h1>
+    <ul id="menu-list">
+        <li class="loading">Đang tải...</li>
+    </ul>
+
+    <script>
+        async function fetchMenu() {
+            try {
+                console.log('Đang lấy dữ liệu menu...');
+                const response = await fetch('http://localhost:3000/api/menu');
+                if (!response.ok) {
+                    throw new Error(`Lỗi HTTP! Trạng thái: ${response.status}`);
+                }
+                const menuData = await response.json();
+                console.log('Dữ liệu menu nhận được:', menuData);
+
+                const menuList = document.getElementById('menu-list');
+                menuList.innerHTML = ''; // Xóa thông báo "Đang tải..."
+
+                if (!menuData || menuData.length === 0) {
+                    menuList.innerHTML = '<li style="padding: 15px; color: #e74c3c;">Không có dữ liệu menu để hiển thị.</li>';
+                    return;
+                }
+
+                menuData.forEach(item => {
+                    const liLevel1 = document.createElement('li');
+                    liLevel1.className = 'level-1';
+                    liLevel1.innerHTML = `<a href="${item.URL}">${item.text}</a>`;
+
+                    if (item.children && item.children.length > 0) {
+                        const ulLevel2 = document.createElement('ul');
+                        item.children.forEach(child => {
+                            const liLevel2 = document.createElement('li');
+                            liLevel2.className = 'level-2';
+                            liLevel2.innerHTML = `<a href="${child.URL}">${child.text}</a>`;
+                            ulLevel2.appendChild(liLevel2);
+                        });
+                        liLevel1.appendChild(ulLevel2);
+                    }
+
+                    menuList.appendChild(liLevel1);
+                });
+            } catch (error) {
+                console.error('Lỗi khi lấy dữ liệu menu:', error);
+                document.getElementById('menu-list').innerHTML = '<li style="padding: 15px; color: #e74c3c;">Lỗi khi tải menu. Vui lòng kiểm tra console để biết chi tiết.</li>';
+            }
+        }
+
+        window.onload = fetchMenu;
+    </script>
+</body>
+</html>

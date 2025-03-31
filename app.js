@@ -17,7 +17,7 @@ app.use(cors({
   methods:['get']
 }))
 
-mongoose.connect("mongodb://localhost:27017/C2");
+mongoose.connect("mongodb://localhost:27017/C2-users");
 mongoose.connection.on("connected", () => {
   console.log("connected");
 })
